@@ -1,6 +1,7 @@
+
+
 import os
-import io
-from flask import Flask, request, render_template_string, send_file
+from flask import Flask, request, render_template_string, redirect
 import yt_dlp
 
 app = Flask(__name__)
@@ -43,17 +44,13 @@ def download():
         'format': 'best',
         'quiet': True,
         'no_warnings': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             video_url = info.get('url')
-            title = info.get('title', 'video')
-            ext = info.get('ext', 'mp4')
-            
-            # إعادة توجيه المستخدم لمصدر الفيديو المباشر للتنزيل السريع
-            from flask import redirect
             return redirect(video_url)
     except Exception as e:
         return f"حدث خطأ أثناء التنزيل: {str(e)}", 500
@@ -61,4 +58,3 @@ def download():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
