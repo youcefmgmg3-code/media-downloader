@@ -1,14 +1,6 @@
 
 import os
-import subprocess
-
-# تثبيت أحدث نسخة من yt-dlp مباشرة قبل تشغيل التطبيق لتجنب الأخطاء
-try:
-    import yt_dlp
-except ImportError:
-    subprocess.run(["pip", "install", "--upgrade", "git+https://github.com/yt-dlp/yt-dlp.git"])
-    import yt_dlp
-
+import requests
 from flask import Flask, request, render_template_string, redirect
 
 app = Flask(__name__)
@@ -46,21 +38,21 @@ def home():
 @app.route('/download', methods=['POST'])
 def download():
     url = request.form.get('url', '').strip()
-    
-    ydl_opts = {
-        'format': 'best',
-        'quiet': True,
-        'no_warnings': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    }
-    
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            video_url = info.get('url')
+        # استخدام خدمة API مجانية ومستقرة لجلب رابط الفيديو بدون حظر
+        api_url = f"https://tikwm.com/api/?url={url}"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(api_url, headers=headers)
+        data = response.json()
+        
+        if data.get("code") == 0:
+            video_url = data["data"]["play"]
             return redirect(video_url)
+        else:
+            # محطة بديلة في حال كان الرابط لليوتيوب أو منصة أخرى
+            return redirect(f"https://co.wuk.sh/api/json?url={url}")
     except Exception as e:
-        return f"حدث خطأ أثناء التنزيل: {str(e)}", 500
+        return f"عذراً، حدث خطأ أثناء معالجة الرابط: {str(e)}", 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
