@@ -1,4 +1,5 @@
 import os
+import io
 from flask import Flask, request, render_template_string, send_file
 import yt_dlp
 
@@ -37,19 +38,27 @@ def home():
 @app.route('/download', methods=['POST'])
 def download():
     url = request.form.get('url', '').strip()
-    if url.startswith('/'):
-        url = url[1:]
     
     ydl_opts = {
-        'outtmpl': '/tmp/%(title)s.%(ext)s',
         'format': 'best',
+        'quiet': True,
+        'no_warnings': True,
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
-        
-    return send_file(filename, as_attachment=True)
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            video_url = info.get('url')
+            title = info.get('title', 'video')
+            ext = info.get('ext', 'mp4')
+            
+            # إعادة توجيه المستخدم لمصدر الفيديو المباشر للتنزيل السريع
+            from flask import redirect
+            return redirect(video_url)
+    except Exception as e:
+        return f"حدث خطأ أثناء التنزيل: {str(e)}", 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
