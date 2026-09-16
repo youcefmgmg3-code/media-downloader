@@ -1,8 +1,15 @@
 
-
 import os
+import subprocess
+
+# تثبيت أحدث نسخة من yt-dlp مباشرة قبل تشغيل التطبيق لتجنب الأخطاء
+try:
+    import yt_dlp
+except ImportError:
+    subprocess.run(["pip", "install", "--upgrade", "git+https://github.com/yt-dlp/yt-dlp.git"])
+    import yt_dlp
+
 from flask import Flask, request, render_template_string, redirect
-import yt_dlp
 
 app = Flask(__name__)
 
